@@ -4,13 +4,13 @@ const themeToggle =
     document.getElementById("themeToggle");
 
 const savedTheme =
-    localStorage.getItem("theme");
+    localStorage.getItem("myTheme");
 
 if (savedTheme === "light") {
 
     document.body.classList.add("light");
 
-    themeToggle.textContent = "☾";
+    themeToggle.textContent = "🌙";
 
 }
 
@@ -23,12 +23,12 @@ themeToggle.addEventListener("click", () => {
         document.body.classList.contains("light");
 
     localStorage.setItem(
-        "theme",
+        "myTheme",
         isLight ? "light" : "dark"
     );
 
     themeToggle.textContent =
-        isLight ? "☾" : "☀";
+        isLight ? "🌙" : "☀️";
 
 });
 
@@ -406,5 +406,3 @@ if (footer) {
         );
 
 }
-#Iron Man is a superhero from Marvel Comics.
-His real name is Tony Stark, a brilliant inventor and businessman.
