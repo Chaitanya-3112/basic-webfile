@@ -1,265 +1,231 @@
-/* =========================================================
-   MODERN PORTFOLIO — INTERACTIVE JAVASCRIPT
-   ========================================================= */
+/* ================= THEME ================= */
+
+const themeToggle =
+    document.getElementById("themeToggle");
+
+const savedTheme =
+    localStorage.getItem("myTheme");
+
+if (savedTheme === "light") {
+
+    document.body.classList.add("light");
+
+    themeToggle.textContent = "🌙";
+
+}
 
 
-/* =========================
-   DOM HELPERS
-========================= */
+themeToggle.addEventListener("click", () => {
 
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => document.querySelectorAll(selector);
+    document.body.classList.toggle("light");
 
-
-/* =========================
-   THEME SYSTEM
-========================= */
-
-const themeButton = $("#themeToggle");
-
-const applyTheme = (theme) => {
-    document.body.classList.toggle("light", theme === "light");
-
-    if (themeButton) {
-        themeButton.textContent =
-            theme === "light" ? "🌙" : "☀️";
-    }
-};
-
-const storedTheme = localStorage.getItem("portfolio-theme");
-
-applyTheme(storedTheme || "dark");
-
-themeButton?.addEventListener("click", () => {
-
-    const lightMode =
-        document.body.classList.toggle("light");
-
-    const selectedTheme =
-        lightMode ? "light" : "dark";
+    const isLight =
+        document.body.classList.contains("light");
 
     localStorage.setItem(
-        "portfolio-theme",
-        selectedTheme
+        "myTheme",
+        isLight ? "light" : "dark"
     );
 
-    themeButton.textContent =
-        lightMode ? "🌙" : "☀️";
-});
-
-
-/* =========================
-   NAVIGATION
-========================= */
-
-const menuButton = $("#menuToggle");
-const navigation = $(".nav-menu");
-
-const closeMenu = () => {
-
-    navigation?.classList.remove("active");
-
-    if (menuButton) {
-        menuButton.textContent = "☰";
-    }
-};
-
-menuButton?.addEventListener("click", () => {
-
-    const opened =
-        navigation.classList.toggle("active");
-
-    menuButton.textContent =
-        opened ? "✕" : "☰";
-});
-
-
-$$(".nav-menu a").forEach(link => {
-
-    link.addEventListener("click", closeMenu);
+    themeToggle.textContent =
+        isLight ? "🌙" : "☀️";
 
 });
 
 
-document.addEventListener("keydown", (event) => {
+/* ================= MOBILE MENU ================= */
 
-    if (event.key === "Escape") {
-        closeMenu();
-    }
+const menuToggle =
+    document.getElementById("menuToggle");
+
+const navMenu =
+    document.querySelector(".nav-menu");
+
+
+menuToggle.addEventListener("click", () => {
+
+    navMenu.classList.toggle("active");
+
+    menuToggle.textContent =
+        navMenu.classList.contains("active")
+            ? "✕"
+            : "☰";
 
 });
 
 
-/* =========================
-   HEADER SCROLL EFFECT
-========================= */
+document
+    .querySelectorAll(".nav-menu a")
+    .forEach(link => {
 
-const header = $("header");
+        link.addEventListener("click", () => {
 
-window.addEventListener("scroll", () => {
+            navMenu.classList.remove("active");
 
-    if (!header) return;
+            menuToggle.textContent = "☰";
 
-    header.classList.toggle(
-        "scrolled",
-        window.scrollY > 50
-    );
+        });
 
-}, { passive: true });
-
-
-/* =========================
-   REVEAL ANIMATIONS
-========================= */
-
-const revealItems = $$(".reveal");
-
-if ("IntersectionObserver" in window) {
-
-    const revealObserver =
-        new IntersectionObserver(
-            (items, observer) => {
-
-                items.forEach(item => {
-
-                    if (!item.isIntersecting) return;
-
-                    item.target.classList.add("visible");
-
-                    observer.unobserve(item.target);
-
-                });
-
-            },
-            {
-                threshold: 0.12,
-                rootMargin: "0px 0px -40px 0px"
-            }
-        );
-
-    revealItems.forEach(item => {
-        revealObserver.observe(item);
     });
 
-} else {
 
-    revealItems.forEach(item => {
-        item.classList.add("visible");
-    });
+/* ================= SCROLL REVEAL ================= */
 
-}
+const revealElements =
+    document.querySelectorAll(".reveal");
 
 
-/* =========================
-   STAT COUNTERS
-========================= */
+const observer =
+    new IntersectionObserver(
 
-const statCards = $$(".counter");
+        entries => {
 
-const animateNumber = (element) => {
+            entries.forEach(entry => {
 
-    const destination =
-        parseInt(element.dataset.target, 10);
+                if (entry.isIntersecting) {
 
-    if (Number.isNaN(destination)) return;
+                    entry.target.classList.add("visible");
 
-    const duration = 1600;
-    const startTime = performance.now();
+                    observer.unobserve(entry.target);
 
-    const update = (currentTime) => {
+                }
 
-        const progress =
-            Math.min(
-                (currentTime - startTime) / duration,
-                1
-            );
+            });
 
-        const eased =
-            1 - Math.pow(1 - progress, 3);
+        },
 
-        const value =
-            Math.floor(destination * eased);
-
-        element.textContent = value;
-
-        if (progress < 1) {
-            requestAnimationFrame(update);
-        } else {
-            element.textContent = destination;
+        {
+            threshold: 0.15
         }
-    };
 
-    requestAnimationFrame(update);
-};
+    );
 
 
-if (statCards.length) {
+revealElements.forEach(element => {
 
-    const counterObserver =
-        new IntersectionObserver(
-            (entries, observer) => {
+    observer.observe(element);
 
-                if (!entries[0].isIntersecting) return;
+});
 
-                statCards.forEach(animateNumber);
 
-                observer.disconnect();
+/* ================= COUNTERS ================= */
 
-            },
-            {
-                threshold: 0.35
+const counters =
+    document.querySelectorAll(".counter");
+
+
+let counterStarted = false;
+
+
+function startCounters() {
+
+    if (counterStarted) return;
+
+    counterStarted = true;
+
+
+    counters.forEach(counter => {
+
+        const target =
+            Number(counter.dataset.target);
+
+        let current = 0;
+
+        const increment =
+            Math.ceil(target / 80);
+
+
+        const updateCounter = () => {
+
+            current += increment;
+
+            if (current >= target) {
+
+                counter.textContent = target;
+
+                return;
+
             }
-        );
 
-    const statsContainer =
-        $(".stats-section");
+            counter.textContent = current;
 
-    if (statsContainer) {
-        counterObserver.observe(statsContainer);
-    }
+            requestAnimationFrame(updateCounter);
+
+        };
+
+
+        updateCounter();
+
+    });
+
 }
 
 
-/* =========================
-   FAQ ACCORDION
-========================= */
+const statsSection =
+    document.querySelector(".stats-section");
 
-$$(".faq-question").forEach(question => {
+
+const statsObserver =
+    new IntersectionObserver(
+
+        entries => {
+
+            if (entries[0].isIntersecting) {
+
+                startCounters();
+
+            }
+
+        },
+
+        {
+            threshold: 0.4
+        }
+
+    );
+
+
+statsObserver.observe(statsSection);
+
+
+/* ================= FAQ ================= */
+
+const faqItems =
+    document.querySelectorAll(".faq-item");
+
+
+faqItems.forEach(item => {
+
+    const question =
+        item.querySelector(".faq-question");
+
+    const answer =
+        item.querySelector(".faq-answer");
+
 
     question.addEventListener("click", () => {
 
-        const currentItem =
-            question.closest(".faq-item");
+        const isActive =
+            item.classList.contains("active");
 
-        if (!currentItem) return;
 
-        const currentlyOpen =
-            currentItem.classList.contains("active");
+        faqItems.forEach(other => {
 
-        $$(".faq-item").forEach(item => {
+            other.classList.remove("active");
 
-            item.classList.remove("active");
-
-            const content =
-                item.querySelector(".faq-answer");
-
-            if (content) {
-                content.style.maxHeight = null;
-            }
+            other.querySelector(
+                ".faq-answer"
+            ).style.maxHeight = null;
 
         });
 
-        if (!currentlyOpen) {
 
-            currentItem.classList.add("active");
+        if (!isActive) {
 
-            const answer =
-                currentItem.querySelector(".faq-answer");
+            item.classList.add("active");
 
-            if (answer) {
-                answer.style.maxHeight =
-                    `${answer.scrollHeight}px`;
-            }
+            answer.style.maxHeight =
+                answer.scrollHeight + "px";
 
         }
 
@@ -268,291 +234,175 @@ $$(".faq-question").forEach(question => {
 });
 
 
-/* =========================
-   CONTACT FORM
-========================= */
+/* ================= CONTACT FORM ================= */
 
-const contactForm = $("#contactForm");
-const messageBox = $("#formMessage");
+const form =
+    document.getElementById("contactForm");
 
-contactForm?.addEventListener("submit", (event) => {
+const formMessage =
+    document.getElementById("formMessage");
+
+
+form.addEventListener("submit", event => {
 
     event.preventDefault();
 
+
     const name =
-        $("#name")?.value.trim();
+        document.getElementById("name").value.trim();
 
     const email =
-        $("#email")?.value.trim();
+        document.getElementById("email").value.trim();
 
     const subject =
-        $("#subject")?.value.trim();
+        document.getElementById("subject").value.trim();
 
     const message =
-        $("#message")?.value.trim();
+        document.getElementById("message").value.trim();
+
 
     if (!name || !email || !subject || !message) {
 
-        showFormMessage(
-            "Please complete all fields.",
-            "error"
-        );
+        formMessage.textContent =
+            "Please fill in all fields.";
 
         return;
+
     }
 
-    const validEmail =
+
+    const emailPattern =
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!validEmail.test(email)) {
 
-        showFormMessage(
-            "Enter a valid email address.",
-            "error"
-        );
+    if (!emailPattern.test(email)) {
+
+        formMessage.textContent =
+            "Please enter a valid email address.";
 
         return;
+
     }
 
-    showFormMessage(
-        `Thanks ${name}! Your message has been received.`,
-        "success"
-    );
 
-    contactForm.reset();
+    formMessage.textContent =
+        "✓ Message validated successfully!";
+
+
+    form.reset();
 
 });
 
 
-function showFormMessage(text, type) {
+/* ================= BACK TO TOP ================= */
 
-    if (!messageBox) return;
+const backTop =
+    document.getElementById("backTop");
 
-    messageBox.textContent = text;
-
-    messageBox.className =
-        `form-message ${type}`;
-
-}
-
-
-/* =========================
-   BACK TO TOP
-========================= */
-
-const topButton = $("#backTop");
 
 window.addEventListener("scroll", () => {
 
-    if (!topButton) return;
+    if (window.scrollY > 600) {
 
-    topButton.classList.toggle(
-        "show",
-        window.scrollY > 500
-    );
+        backTop.classList.add("show");
 
-}, { passive: true });
+    } else {
+
+        backTop.classList.remove("show");
+
+    }
+
+});
 
 
-topButton?.addEventListener("click", () => {
+backTop.addEventListener("click", () => {
 
     window.scrollTo({
+
         top: 0,
+
         behavior: "smooth"
-    });
-
-});
-
-
-/* =========================
-   MODERN CURSOR
-========================= */
-
-const cursorDot = $(".cursor");
-const cursorRing = $(".cursor-follower");
-
-let mouseX = -100;
-let mouseY = -100;
-let ringX = -100;
-let ringY = -100;
-
-if (window.matchMedia("(pointer: fine)").matches) {
-
-    document.addEventListener("mousemove", (event) => {
-
-        mouseX = event.clientX;
-        mouseY = event.clientY;
-
-        if (cursorDot) {
-
-            cursorDot.style.left =
-                `${mouseX}px`;
-
-            cursorDot.style.top =
-                `${mouseY}px`;
-        }
-
-    });
-
-    const followCursor = () => {
-
-        ringX += (mouseX - ringX) * 0.15;
-        ringY += (mouseY - ringY) * 0.15;
-
-        if (cursorRing) {
-
-            cursorRing.style.left =
-                `${ringX}px`;
-
-            cursorRing.style.top =
-                `${ringY}px`;
-        }
-
-        requestAnimationFrame(followCursor);
-    };
-
-    followCursor();
-
-
-    /* Cursor interaction */
-
-    $$("a, button, .service-card, .project-card")
-        .forEach(element => {
-
-            element.addEventListener(
-                "mouseenter",
-                () => {
-                    cursorRing?.classList.add("cursor-active");
-                }
-            );
-
-            element.addEventListener(
-                "mouseleave",
-                () => {
-                    cursorRing?.classList.remove("cursor-active");
-                }
-            );
-
-        });
-
-}
-
-
-/* =========================
-   CARD TILT EFFECT
-========================= */
-
-$$(".project-card, .service-card").forEach(card => {
-
-    card.addEventListener("mousemove", (event) => {
-
-        if (!window.matchMedia("(pointer: fine)").matches) {
-            return;
-        }
-
-        const rect =
-            card.getBoundingClientRect();
-
-        const x =
-            event.clientX - rect.left;
-
-        const y =
-            event.clientY - rect.top;
-
-        const rotateY =
-            ((x / rect.width) - 0.5) * 8;
-
-        const rotateX =
-            ((y / rect.height) - 0.5) * -8;
-
-        card.style.transform =
-            `perspective(900px)
-             rotateX(${rotateX}deg)
-             rotateY(${rotateY}deg)
-             translateY(-8px)`;
-
-    });
-
-    card.addEventListener("mouseleave", () => {
-
-        card.style.transform = "";
 
     });
 
 });
 
 
-/* =========================
-   ACTIVE NAV LINK
-========================= */
+/* ================= CUSTOM CURSOR ================= */
 
-const sections = $$("section[id]");
-const navLinks = $$(".nav-menu a");
+const cursor =
+    document.querySelector(".cursor");
 
-if (sections.length && navLinks.length) {
+const follower =
+    document.querySelector(".cursor-follower");
 
-    const sectionObserver =
-        new IntersectionObserver(
-            (entries) => {
 
-                entries.forEach(entry => {
+document.addEventListener("mousemove", event => {
 
-                    if (!entry.isIntersecting) return;
+    cursor.style.left =
+        `${event.clientX}px`;
 
-                    navLinks.forEach(link => {
+    cursor.style.top =
+        `${event.clientY}px`;
 
-                        link.classList.remove("active");
 
-                        const target =
-                            link.getAttribute("href");
+    follower.style.transform =
+        `translate(
+            ${event.clientX - 17}px,
+            ${event.clientY - 17}px
+        )`;
 
-                        if (
-                            target ===
-                            `#${entry.target.id}`
-                        ) {
-                            link.classList.add("active");
-                        }
+});
 
-                    });
 
-                });
+/* ================= BUTTON HOVER EFFECT ================= */
 
-            },
-            {
-                threshold: 0.45
+document
+    .querySelectorAll(".btn, .service-card, .project-card")
+    .forEach(element => {
+
+        element.addEventListener(
+            "mouseenter",
+            () => {
+
+                follower.style.transform +=
+                    " scale(1.5)";
+
             }
         );
 
-    sections.forEach(section => {
-        sectionObserver.observe(section);
     });
 
-}
+
+/* ================= KEYBOARD SHORTCUT ================= */
+
+document.addEventListener("keydown", event => {
+
+    if (event.key === "Escape") {
+
+        navMenu.classList.remove("active");
+
+        menuToggle.textContent = "☰";
+
+    }
+
+});
 
 
-/* =========================
-   DYNAMIC FOOTER YEAR
-========================= */
+/* ================= DYNAMIC YEAR ================= */
 
-const currentYear =
+const year =
     new Date().getFullYear();
 
-const yearElements =
-    $$("[data-year]");
+const footer =
+    document.querySelector("footer");
 
-yearElements.forEach(element => {
+if (footer) {
 
-    element.textContent = currentYear;
+    footer.innerHTML =
+        footer.innerHTML.replace(
+            "2026",
+            year
+        );
 
-});
-
-
-/* =========================
-   PAGE LOADED
-========================= */
-
-window.addEventListener("load", () => {
-
-    document.body.classList.add("page-loaded");
-
-});
+}
